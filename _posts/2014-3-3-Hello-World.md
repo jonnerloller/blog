@@ -4,7 +4,7 @@ title: First Post!
 published: true
 ---
 Nothing really
-```c[[
+```cpp
 int main()
 {
 }
