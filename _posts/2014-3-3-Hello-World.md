@@ -1,6 +1,11 @@
 ---
 layout: post
-title: You're up and running!
+title: First Post!
 published: true
 ---
 Nothing really
+```
+int main()
+{
+}
+```
