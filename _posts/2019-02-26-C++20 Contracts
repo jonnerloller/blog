@@ -1,0 +1,106 @@
+---
+layout: post
+title: C++20 Contracts
+published: false
+tags: ["C++20","contracts"]
+---
+
+This post was inspired by Björn Fahller's talk during cpponsea 2019, "Programming with Contracts in C++20"
+
+So. It's time to talk about contracts in c++20. But before that, we first need to talk about the fundamental software development approach,
+design by contract.
+
+The high level overview of Contracts in software engineering is that for any software component, or system, or function, 
+can technically be described as a series of preconditions, postconditions, invariants, and side effects.
+
+The is is similar to that of an actual contract, for example: Factory A agrees that as long as Client B provides factory A with the correct materials, 
+Factory A will then produce some Product C for Client B.
+
+Design by contract, however, insists that contracts are so important to ensuring a software's correctness, that you should write the assertions
+first. There are 2 main ways that contracts are written during the design.
+1. Comments - Clearly the weakest forms of ensuring that the contract is adhered to.
+2. Test Cases - Test Driven Development(TDD) was basically made to ensure that contracts are adhered to. If the contract is not properly kept, 
+then the code will fail.
+3. Language features - Some languages have contracts built into their language. C++ will be bringing it in soon to the language during C++20.
+
+Let us formally define the terms.
+1. Precondition: An condition that the caller must satisfy in order for the program to be considered correct. 
+In the event that a precondition is violated, the behavior of the section of code following is considered undefined.
+2. Postcondition: A condition that must be true after the execution of some code or an operation.
+3. Invariants: Something that has to be true for the duration of program execution.
+
+
+And now let's say we want to have a simple stack array data structure.
+
+{% highlight cpp %}
+template<typename T, int N>
+class array_stack
+{
+    queue();
+
+    int size() const;
+
+    const T& top() const;
+
+    void push(T value);
+
+    void pop();
+};
+{% endhighlight %}
+
+We should probably have defined some pre-condtions.
+
+{% highlight cpp %}
+template<typename T, int N>
+class array_stack
+{
+    queue();
+
+    int size() const;
+
+    // requires: size() > 0
+    const T& top() const;
+
+    // requires: size() < N
+    void push(T value);
+
+    // requires: size() > 0
+    void pop();
+};
+{% endhighlight %}
+
+Notice that a default constructor doesn't have any preconditions.
+It doesn't make much sense if a function that is made to construct an object, requires something to happen beforehand.
+But we also should define some post conditions.
+
+Here we just want some nice way to define post conditions in terms of their original value.
+We short hand old_ for it.
+
+{% highlight cpp %}
+template<typename T, int N>
+class array_stack
+{
+    // invariant : size() >= 0 && size() <= N
+    // ensures: size() == 0
+    queue();
+
+    int size() const;
+
+    // requires: size() > 0
+    const T& top() const;
+
+    // requires: size() < N
+    // ensures: size() = old_size()+1
+                top() = value
+    void push(T value);
+
+    // requires: size() > 0
+    // ensures: size() == old_size - 1
+                return == old_front()           
+    T pop();
+};
+{% endhighlight %}
+
+So we've listed down some specifications for our class.
+Why is this important? It's important because if our code breaks, we can easily identify the culprit.
+If a precondition fails, the client is clearly the one at fault. And for any other reason, it is the implementation at fault.
