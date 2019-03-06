@@ -48,7 +48,7 @@ class array_stack
 };
 {% endhighlight %}
 
-We should probably have defined some pre-condtions.
+##We should probably have defined some pre-condtions.
 
 {% highlight cpp %}
 template<typename T, int N>
@@ -75,6 +75,8 @@ But we also should define some post conditions.
 
 Here we just want some nice way to define post conditions in terms of their original value.
 We short hand old_ for it.
+
+##Comment method
 
 {% highlight cpp %}
 template<typename T, int N>
@@ -104,3 +106,140 @@ class array_stack
 So we've listed down some specifications for our class.
 Why is this important? It's important because if our code breaks, we can easily identify the culprit.
 If a precondition fails, the client is clearly the one at fault. And for any other reason, it is the implementation at fault.
+
+That's great that we wrote down our specifications for our class and all... But, to be very honest, those are just comments.
+They don't really do anything right now. 
+
+##So let's try to see how we would implement something in old C++.
+
+{% highlight cpp %}
+template<typename T, int N>
+class array_stack
+{
+    // invariant : size() >= 0 && size() <= N
+    // ensures: size() == 0
+    queue():size(0)
+    {
+        // ... code here
+
+        assert(size() == 0);
+    }
+
+    int size() const;
+
+    // requires: size() > 0
+    const T& top() const
+    {
+        assert(size() > 0);
+
+        // ... code here.
+    }
+
+    // requires: size() < N
+    // ensures: size() = old_size()+1
+                top() = value
+    void push(T value)
+    {
+        assert(size() < N);
+
+        // ... code here
+
+        assert(size() == old_size() + 1);
+        assert(top() == value);
+    }
+
+    // requires: size() > 0
+    // ensures: size() == old_size - 1
+                return == old_front()           
+    T pop()
+    {
+        asset(size() > 0)
+
+        // ... code here
+
+        assert(size() == old_size() - 1);
+        assert(ret == old_front());
+    }
+};
+{% endhighlight %}
+
+And that's a rough skeletal implementation of how we would do it in c++ before we had contracts, using the old school assert macros that were
+provided by the library. However there are a few issues with this. 
+1. We now mix our contracts with our definitions.
+- Imagine if we split our interface from implementation, there is no way for the user to know what the contract is unless he looks at the comment.
+Which means that the contracts have to be maintained in both the comments in the interface file, and the code in the implementation file.
+Double the work effort, and double the maintenance.
+
+2. Because the C assert is a macro, it cannot handle templated style asserts easily. For example ```assert(std::is_same<T,int>::value)``` will not
+work because of the ```","```, due to the way the preprocessor works. Ideally we want something similar to ```static_assert(std::is_same<T,int>::value)```
+which is not a macro, and works nicely with c++ templates.
+
+##So now let us look at the C++20 style of doing contracts.
+
+{% highlight cpp %}
+template<typename T, int N>
+class array_stack
+{
+    // invariant : size() >= 0 && size() <= N
+
+    queue()
+    [[ ensures: size() == 0]];
+
+    int size() const;
+
+    const T& top() const 
+    [[expects: size() > 0]];
+
+    void push(T value) 
+    [[expects: size() < N]] 
+    //[[ensures: size() == old_size() + 1]] <- It would be nice if we could have a way to retrieve a previous state, 
+    //                                         but we don't have a mechanism for that.
+    [[ensures: size() > 0 ]] 
+    [[ensures: top() == value]];
+     
+    T pop() 
+    [[expects: size() > 0] 
+    [[ensures: size() == old_size - 1]]] 
+    //[[ensures: return == old_front]]      <- same here.
+};
+{% endhighlight %}
+
+This is what the code would look like in c++20. It's not perfect, there are some contracts that cannot be expressed, whereas in our old C++
+method, we could probably code in the old_size, and the old_front, and do the contract,but all in all, it allows for more expressiveness and
+code maintainability.
+
+We don't provide the implementation details here, but that is okay. Because once the 
+contract has been established in the first declaration of the function, then the checks will be run, before and after the function is executed.
+Meaning that you don't have to manually put ``` expects ``` and ```ensures ``` blocks inside your code.
+
+Additionally, c++20 also provides us with ``` [[assert:x]] ```, a proper language construct to replace the old macro of the past. this allows
+us to use it nicely with our templated code without going through roundabout hacks.
+
+**Bonus features**
+Remember how we can turn on and off asserts by defining a macro to set what our debug level was?
+Well we now have the same contraption for contracts.
+
+We have 3 settings that we can set for our contracts
+1. default
+2. audit
+3. axiom: This is more for formal comments, and is never actually checked at runtime. It still needs to have functions declared to compile,
+and can be used in conjuction with certain concepts.
+
+We have 3 settings that we set on our compiler to police our contracts.
+1. off : No contract checking is performed.
+2. default : Checking is performed for contract whose contract-level is default.
+3. audit: Checking is performed for contract-level is default or audit.
+
+***Bonus features 2**
+We can also customize our contract violation experience, by writing a function that handles the violation of type 
+
+``` void handler_name(const std::contract_violation& v) ```
+More info is available at
+
+https://en.cppreference.com/w/cpp/error/contract_violation
+
+To summarize, I believe that all along we should have be thinking in terms of preconditions, and postconditions. 
+It is also the foundation of our unit tests. In some sense, what C++20 provides for us is a way to self-document our code,
+and also provide micro-tests for out code within the code itself. This allows for better code maintenance and locality of error.
+Obviously tests still have to be written to ensure system wide coherence, but at least there are more parts of the code that seems to be
+more expressive and maintainable now.
