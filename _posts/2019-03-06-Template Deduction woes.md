@@ -4,11 +4,8 @@ title: Template Deduction Woes!
 published: true
 tags: ["short","templates","rant"]
 ---
-
 This is just going to be short rant about template deduction.
-
 Today I encountered a simple template problem that took me way longer than I should to solve.
-
 Simply put, it was something like this
 
 {% highlight cpp %}
