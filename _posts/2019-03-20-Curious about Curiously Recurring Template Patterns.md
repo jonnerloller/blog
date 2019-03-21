@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Curious about Curiously Recurring Template Pattern
+title: Curious about Curiously Recurring Template Patterns
 published: true
 tags: ["CRTP","C++","templates"]
 ---
