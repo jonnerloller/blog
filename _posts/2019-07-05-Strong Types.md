@@ -166,4 +166,8 @@ That being said, the example I gave was definitely far too dumb to showcase the 
 The issues that can be easily resolved are
 1. Better grouping of arguments.
 - In this case, topleft_x,topleft_y, could have been a point2 or a vec2, that represent position, that may help to reduce the number of StrongTypes declared.
-2. Generally speaking, the types that you declare can be reused in multiple places. For example the example I gave at the start ```using VertexIndex = StrongType<unsigned,struct VertexIndexTag>; using TriangleIndex = StrongType<unsigned,struct TriangleIndex>;```. These Strong types can be declared once, and then used throughout the program.
+2. Generally speaking, the types that you declare can be reused in multiple places. For example the example I gave at the start 
+
+{% highlight cpp %}using VertexIndex = StrongType<unsigned,struct VertexIndexTag>; using TriangleIndex = StrongType<unsigned,struct TriangleIndex>;{% endhighlight %}
+
+. These Strong types can be declared once, and then used throughout the program.
